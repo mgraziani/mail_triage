@@ -13,6 +13,9 @@ import json
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
+
+TZ = ZoneInfo("Europe/Rome")
 
 STATE_FILE = Path(__file__).parent / "state.json"
 
@@ -58,7 +61,7 @@ def get_decision(state=None):
     if state is None:
         state = load_state()
 
-    now = datetime.now()
+    now = datetime.now(TZ)
 
     if state["mode"] == "waiting":
         if state.get("wait_until"):
@@ -88,7 +91,7 @@ def get_decision(state=None):
 
 def mark_sent(thread_id=None):
     state = load_state()
-    state["last_sent_at"] = datetime.now().isoformat()
+    state["last_sent_at"] = datetime.now(TZ).isoformat()
     if thread_id and thread_id not in state.get("sent_thread_ids", []):
         state.setdefault("sent_thread_ids", []).append(thread_id)
     save_state(state)
@@ -98,7 +101,7 @@ def mark_fatto(from_email):
     state = load_state()
     if from_email not in state.get("fatto_received_from", []):
         state.setdefault("fatto_received_from", []).append(from_email)
-    wait_until = datetime.now() + timedelta(days=30)
+    wait_until = datetime.now(TZ) + timedelta(days=30)
     state.update({
         "mode": "waiting",
         "wait_until": wait_until.isoformat(),
